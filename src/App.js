@@ -1,25 +1,232 @@
+import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Holiwi
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+const url = "http://localhost:8080/api/users"
+
+class App extends Component {
+
+  //Estado para almacenar toda la data
+  state = {
+    data:[],
+    modalInsertar: false,
+    modalEliminar: false,
+    form:{
+      tipoID:'',
+      numero: '',
+      primerNombre:'',
+      otroNombre: '',
+      primerApellido : '',
+      segundoApellido : '',
+      pais : '',
+      area: '',
+      fechaDeRegistro : new Date(),
+      fechaDeIngreso : "2021-10-16T01:10:22.359Z"
+    },
+    tipoModal : ''
+  }
+
+  peticionesGet = () => { 
+    axios.get(url).then(response => {
+      console.log(response.data)
+      this.setState({data : response.data.usuarios})
+    }).catch(error => {
+      console.log(error)
+    })
+  }
+
+  peticionPost = async () => {
+    const obj = {
+      ...this.state.form,
+      fechaDeRegistro : new Date(),
+      fechaDeIngreso : "2021-10-16T01:10:22.359Z"
+    }
+    const json = JSON.stringify(obj)
+    await axios.post(url,json,{
+      headers: {
+        // Overwrite Axios's automatically set Content-Type
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      this.modalInsertar()
+      this.peticionesGet()
+    }).catch(error => {
+      console.log(error)
+    })
+  }
+
+  peticionPut = () => {
+    const json = JSON.stringify(this.state.form)
+    axios.put(`${url}/${this.state.form.numero}`,json , {
+      headers: {
+        // Overwrite Axios's automatically set Content-Type
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      this.modalInsertar()
+      this.peticionesGet()
+    }).catch(error => {
+      console.log(error)
+    })
+  }
+
+  peticionDelete = () => {
+    axios.delete(`${url}/${this.state.form.numero}`).then(response=>{
+      this.setState({modalEliminar : false})
+      this.peticionesGet()
+    }).catch(error => {
+      console.log(error)
+    })
+  }
+
+  modalInsertar = () => {
+    this.setState({modalInsertar : !this.state.modalInsertar})
+  }
+
+  seleccionarUsuario = (usuario) => {
+    this.setState({
+      tipoModal : 'actualizar',
+      form:{
+        tipoID:usuario.tipoID,
+        numero: usuario.numero,
+        primerNombre:usuario.primerNombre,
+        otroNombre: usuario.otroNombre,
+        primerApellido : usuario.primerApellido,
+        segundoApellido : usuario.segundoApellido,
+        pais : usuario.pais,
+        area: usuario.area,
+        fechaDeEdicion : "2021-10-16T01:10:22.359Z",
+        fechaDeRegistro : "2021-10-16T01:10:22.359Z",
+        fechaDeIngreso : "2021-10-16T01:10:22.359Z"
+      }
+    })
+  }
+
+  handleChange = async e => {
+    e.persist()
+    await this.setState({
+      form:{
+        ...this.state.form,
+        [e.target.name]: e.target.value
+      }
+    })
+    console.log(this.state.form)
+  }
+
+
+  //Ciclo de vida 
+  
+  componentDidMount() {
+    this.peticionesGet()
+  }
+
+
+  render(){
+    const {form} = this.state
+    return (
+      <div className="App">
+    <br /><br /><br />
+  <button className="btn btn-success" onClick={()=>{this.setState({form : null, tipoModal: 'insertar'}); this.modalInsertar()}}>Agregar Usuario</button>
+  <br /><br />
+    <table className="table ">
+      <thead>
+        <tr>
+          <th>Tipo ID</th>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Apellidos</th>
+          <th>Area</th>
+          <th>Pais</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {this.state.data.map(user =>{
+          return(
+            <tr> 
+              <td>{user.tipoID}</td>
+              <td>{user.numero}</td>
+              <td>{`${user.primerNombre} ${user.otroNombre}`}</td>
+              <td>{`${user.primerApellido} ${user.segundoApellido}`}</td>
+              <td>{user.area}</td>
+              <td>{user.pais}</td>
+              <td>
+                <button className="btn btn-primary" onClick={() => {this.seleccionarUsuario(user); this.modalInsertar()}}><FontAwesomeIcon icon={faEdit}/></button>
+                {"   "}
+                <button className="btn btn-danger" onClick ={()=>{this.seleccionarUsuario(user); this.setState({modalEliminar:true})} } ><FontAwesomeIcon icon={faTrashAlt}/></button>
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+
+    <Modal isOpen= {this.state.modalInsertar}>
+                <ModalHeader style={{display: 'block'}}>
+                  <span style={{float: 'right'}} onClick = {()=> this.modalInsertar()}>x</span>
+                </ModalHeader>
+                <ModalBody>
+                  <div className="form-group">
+                    <label htmlFor="tipoID">Tipo de Identifiación</label>
+                    <input className="form-control" type="text" name="tipoID" id="tipoID" onChange={this.handleChange} value = {form ? form.tipoID : ''}/>
+                    <br />
+                    <label htmlFor="numero">Numero de Identificación</label>
+                    <input className="form-control" type="text" name="numero" id="numero" onChange={this.handleChange} value = {form ? form.numero : ''}/>
+                    <br />
+                    <label htmlFor="primerNombre">Primer Nombre</label>
+                    <input className="form-control" type="text" name="primerNombre" id="primerNombre" onChange={this.handleChange} value = {form ? form.primerNombre : ''}/>
+                    <br />
+                    <label htmlFor="otroNombre">Segundo Nombre</label>
+                    <input className="form-control" type="text" name="otroNombre" id="otroNombre" onChange={this.handleChange} value = {form ? form.otroNombre : ''}/>
+                    <br />
+                    <label htmlFor="primerApellido">Primer Apellido</label>
+                    <input className="form-control" type="text" name="primerApellido" id="primerApellido" onChange={this.handleChange} value = {form ? form.primerApellido : ''}/>
+                    <br />
+                    <label htmlFor="segundoApellido">Segundo Apellido</label>
+                    <input className="form-control" type="text" name="segundoApellido" id="segundoApellido" onChange={this.handleChange} value = {form ? form.segundoApellido : ''} />
+                    <br />
+                    <label htmlFor="pais">País de Operación</label>
+                    <input className="form-control" type="text" name="pais" id="pais" onChange={this.handleChange} value = {form ? form.pais : ''}/>
+                    <br />
+                    <label htmlFor="area">Área</label>
+                    <input className="form-control" type="text" name="area" id="area" onChange={this.handleChange} value = {form ? form.area : ''}/>
+                    <br />
+                  </div>
+                </ModalBody>
+
+                <ModalFooter>
+          { this.state.tipoModal === 'insertar' ?
+                    <button className="btn btn-success" onClick = {this.peticionPost}>
+                    Insertar
+                  </button> :
+                  <button className="btn btn-success" onClick = {this.peticionPut} >
+                  Actualizar
+                 </button>
+          }
+  
+                    <button className="btn btn-danger" onClick = {()=>this.modalInsertar()}>Cancelar</button>
+                </ModalFooter>
+    </Modal>
+
+    <Modal isOpen={this.state.modalEliminar}>
+            <ModalBody>
+               Estás seguro que deseas eliminar al usuario? {form && (form.primerNombre + " " + form.primerApellido)}
+            </ModalBody>
+            <ModalFooter>
+              <button className="btn btn-danger" onClick={()=>this.peticionDelete()}>Sí</button>
+              <button className="btn btn-secundary" onClick={()=>this.setState({modalEliminar: false})}>No</button>
+            </ModalFooter>
+    </Modal>
+
+
+  </div>
   );
+  }
 }
 
 export default App;
