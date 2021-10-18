@@ -6,22 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-
-
-const formSh = {
-  tipoID:'',
-  numero: '',
-  primerNombre:'',
-  otroNombre: '',
-  primerApellido : '',
-  segundoApellido : '',
-  pais : '',
-  area: '',
-  fechaDeRegistro : '',
-  fechaDeIngreso : ''
-}
-const url = "http://localhost:8080/api/users"
-const urlSearch = "http://localhost:8080/api/search"
+const resources = require('./resources')
 const hoy = new Date().toISOString().slice(0, 10)
 const mesAnteriorFinal =  (hoy) => {
   const split = String(Number(hoy.split('-')[1]) - 1)
@@ -43,6 +28,7 @@ class App extends Component {
     form:{
       tipoID:'',
       numero: '',
+      correo : '',
       primerNombre:'',
       otroNombre: '',
       primerApellido : '',
@@ -63,7 +49,7 @@ class App extends Component {
   }
 
   peticionesGet = () => { 
-    axios.get(url).then(response => {
+    axios.get(resources.url).then(response => {
       console.log(response.data)
       this.setState({data : response.data.usuarios, cantidadUsers : Array.from(Array(Math.floor(response.data.total/5) + 1).keys())})
     }).catch(error => {
@@ -72,7 +58,7 @@ class App extends Component {
   }
 
   peticionesGetPaginado = (desde=0,limite=5) => { 
-    axios.get(url+'?desde='+desde+'&limite='+limite).then(response => {
+    axios.get(resources.url+'?desde='+desde+'&limite='+limite).then(response => {
       console.log(response.data)
       this.setState({data : response.data.usuarios})
     }).catch(error => {
@@ -86,7 +72,7 @@ class App extends Component {
       fechaDeRegistro : hoy,
     }
     const json = JSON.stringify(obj)
-    await axios.post(url,json,{
+    await axios.post(resources.url,json,{
       headers: {
         // Overwrite Axios's automatically set Content-Type
         'Content-Type': 'application/json'
@@ -101,7 +87,7 @@ class App extends Component {
 
   peticionPut = () => {
     const json = JSON.stringify(this.state.form)
-    axios.put(`${url}/${this.state.form.numero}`,json , {
+    axios.put(`${resources.url}/${this.state.form.numero}`,json , {
       headers: {
         // Overwrite Axios's automatically set Content-Type
         'Content-Type': 'application/json'
@@ -114,8 +100,8 @@ class App extends Component {
     })
   }
 
-  peticionDelete = () => {
-    axios.delete(`${url}/${this.state.form.numero}`).then(response=>{
+  peticionDelete = async() => {
+    await axios.delete(`${resources.url}/${this.state.form.numero}`).then(response=>{
       this.setState({modalEliminar : false})
       this.peticionesGet()
     }).catch(error => {
@@ -140,7 +126,7 @@ class App extends Component {
         pais : usuario.pais,
         area: usuario.area,
         fechaDeRegistro : usuario.fechaDeRegistro,
-        fechaDeIngreso : usuario.fechaDeIngreso
+        fechaDeIngreso : usuario.fechaDeIngreso,
       }
     })
   }
@@ -152,7 +138,7 @@ class App extends Component {
     await this.setState({
       form:{
         ...this.state.form,
-        [e.target.name]: e.target.value
+        [e.target.name]: e.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       }
     })
 
@@ -181,10 +167,8 @@ class App extends Component {
     e.preventDefault()
     const {categoria} = this.state
     const {search} = this.state.formSearch
-    const urlL = `${url}/${categoria}/${search}`
-    console.log({urlL})
-    axios.get(`${urlSearch}/${categoria}/${search}`).then(response => {
-      console.log(response.data)
+    const urlL = `${resources.url}/${categoria}/${search}`
+    axios.get(`${resources.urlSearch}/${categoria}/${search}`).then(response => {
       this.setState({data : response.data.results})
       console.log(this.state.data)
     }).catch(error => {
@@ -207,7 +191,10 @@ class App extends Component {
     return (
       <div className="App">
 
-    <div id="demoFont">CIDENET</div>
+    <div id="demoFont" onClick= {() => {
+      this.setState({paginadoInicial:0, paginadoFinal : 5})
+      this.peticionesGet()
+    }}>CIDENET</div>
 
     <br />
 
@@ -216,7 +203,7 @@ class App extends Component {
       <select id="inputState" class="form-control" onChange={this.tipoCategoriaOnChange}>
         <option selected>Escoger categoria de busqueda</option>
         {
-          Object.keys(formSh).map((each) =>{
+          Object.keys(resources.formSh).map((each) =>{
             if(!['area','fechaDeIngreso','fechaDeRegistro'].includes(each)){
               return (
                 <option value={each}>{each}</option>
@@ -263,9 +250,9 @@ class App extends Component {
               <td>{user.fechaDeIngreso}</td>
               <td>{user.fechaDeRegistro}</td>
               <td>
-                <button className="btn btn-primary" onClick={() => {this.seleccionarUsuario(user); this.modalInsertar()}}><FontAwesomeIcon icon={faEdit}/></button>
+                <button className="btn btn-primary" onClick={() => {this.seleccionarUsuario(user); this.modalInsertar(); this.setState({paginadoInicial:0, paginadoFinal : 5})}}><FontAwesomeIcon icon={faEdit}/></button>
                 {"   "}
-                <button className="btn btn-danger" onClick ={()=>{this.seleccionarUsuario(user); this.setState({modalEliminar:true})} } ><FontAwesomeIcon icon={faTrashAlt}/></button>
+                <button className="btn btn-danger" onClick ={()=>{this.seleccionarUsuario(user); this.setState({modalEliminar:true}); this.setState({paginadoInicial:0, paginadoFinal : 5})} } ><FontAwesomeIcon icon={faTrashAlt}/></button>
               </td>
             </tr>
           )
@@ -280,7 +267,19 @@ class App extends Component {
                 <ModalBody>
                   <div className="form-group">
                     <label htmlFor="tipoID">Tipo de Identifiación</label>
-                    <input className="form-control" type="text" name="tipoID" id="tipoID" onChange={this.handleChange} value = {form ? form.tipoID : ''}/>
+                 
+
+                    <select  name="tipoID"  id="tipoID" class="form-control" onChange={this.handleChange} value = {form ? form.tipoID : ''}>
+                      <option selected>Escoger tipo de identificacion</option>
+                        {
+                          resources.tipoID.map((each) =>{
+                              return (
+                                <option value={each}>{each}</option>
+                              )
+                          
+                          })
+                        }
+                  </select>
                     <br />
                     <label htmlFor="numero">Numero de Identificación</label>
                     <input className="form-control" type="text" name="numero" id="numero" onChange={this.handleChange} value = {form ? form.numero : ''}/>
@@ -298,10 +297,36 @@ class App extends Component {
                     <input className="form-control" type="text" name="segundoApellido" id="segundoApellido" onChange={this.handleChange} value = {form ? form.segundoApellido : ''} />
                     <br />
                     <label htmlFor="pais">País de Operación</label>
-                    <input className="form-control" type="text" name="pais" id="pais" onChange={this.handleChange} value = {form ? form.pais : ''}/>
+                    
+
+                    <select  name="pais"  id="pais" class="form-control" onChange={this.handleChange} value = {form ? form.pais : ''}>
+                      <option selected>Pais de Operación</option>
+                        {
+                          resources.pais.map((each) =>{
+                              return (
+                                <option value={each}>{each}</option>
+                              )
+                          
+                          })
+                        }
+                  </select>
+
+
                     <br />
                     <label htmlFor="area">Área</label>
-                    <input className="form-control" type="text" name="area" id="area" onChange={this.handleChange} value = {form ? form.area : ''}/>
+
+                    <select  name="area"  id="area" class="form-control" onChange={this.handleChange} value = {form ? form.area : ''}>
+                      <option selected>Área de Operación</option>
+                        {
+                          resources.area.map((each) =>{
+                              return (
+                                <option value={each}>{each}</option>
+                              )
+                          
+                          })
+                        }
+                  </select>
+
                     <br />
                     <label htmlFor="area">Fecha de Ingreso</label>
                     <input  type="date" id="fechaDeIngreso" name="fechaDeIngreso"
