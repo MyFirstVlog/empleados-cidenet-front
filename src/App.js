@@ -18,7 +18,9 @@ const mesAnteriorFinal =  (hoy) => {
 return hoy.split('-')[0]+'-'+split+'-'+hoy.split('-')[2]
 }
 
+
 class App extends Component {
+
 
   //Estado para almacenar toda la data
   state = {

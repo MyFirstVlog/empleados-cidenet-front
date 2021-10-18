@@ -2,6 +2,10 @@
   "name": "cidenet",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "npm": "6.14.14",
+    "node": "14.17.5"
+  },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
@@ -11,6 +15,7 @@
     "@testing-library/user-event": "^12.8.3",
     "axios": "^0.23.0",
     "bootstrap": "^5.1.3",
+    "dotenv": "^10.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
