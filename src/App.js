@@ -7,7 +7,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 
+
+const formSh = {
+  tipoID:'',
+  numero: '',
+  primerNombre:'',
+  otroNombre: '',
+  primerApellido : '',
+  segundoApellido : '',
+  pais : '',
+  area: '',
+  fechaDeRegistro : '',
+  fechaDeIngreso : ''
+}
 const url = "http://localhost:8080/api/users"
+const urlSearch = "http://localhost:8080/api/search"
 const hoy = new Date().toISOString().slice(0, 10)
 const mesAnteriorFinal =  (hoy) => {
   const split = String(Number(hoy.split('-')[1]) - 1)
@@ -38,11 +52,27 @@ class App extends Component {
       fechaDeRegistro : '',
       fechaDeIngreso : ''
     },
-    tipoModal : ''
+    tipoModal : '',
+    paginadoFinal : 5,
+    paginadoInicial : 0,
+    cantidadUsers : [],
+    formSearch:{
+      search:''
+    },
+    categoria:''
   }
 
   peticionesGet = () => { 
     axios.get(url).then(response => {
+      console.log(response.data)
+      this.setState({data : response.data.usuarios, cantidadUsers : Array.from(Array(Math.floor(response.data.total/5) + 1).keys())})
+    }).catch(error => {
+      console.log(error)
+    })
+  }
+
+  peticionesGetPaginado = (desde=0,limite=5) => { 
+    axios.get(url+'?desde='+desde+'&limite='+limite).then(response => {
       console.log(response.data)
       this.setState({data : response.data.usuarios})
     }).catch(error => {
@@ -128,6 +158,42 @@ class App extends Component {
 
   }
 
+  handleChangeSearch = async e => {
+    e.persist()
+    await this.setState({
+      formSearch:{
+        ...this.state.formSearch,
+        [e.target.name]: e.target.value
+      }
+    })
+    console.log(this.state.formSearch)
+
+  }
+
+  tipoCategoriaOnChange = () => {
+    const select = document.getElementById('inputState')
+    const categoria = select.value
+    this.setState({categoria})
+    console.log({categoria})
+  }
+
+  onSubmitBusqueda = (e) => {
+    e.preventDefault()
+    const {categoria} = this.state
+    const {search} = this.state.formSearch
+    const urlL = `${url}/${categoria}/${search}`
+    console.log({urlL})
+    axios.get(`${urlSearch}/${categoria}/${search}`).then(response => {
+      console.log(response.data)
+      this.setState({data : response.data.results})
+      console.log(this.state.data)
+    }).catch(error => {
+      console.log(error)
+    })
+  }
+
+
+
 
   //Ciclo de vida 
   
@@ -140,7 +206,34 @@ class App extends Component {
     const {form} = this.state
     return (
       <div className="App">
-    <br /><br /><br />
+
+    <div id="demoFont">CIDENET</div>
+
+    <br />
+
+    <label for="inputState">Elige La categoria que desees Buscar</label>
+    <br />
+      <select id="inputState" class="form-control" onChange={this.tipoCategoriaOnChange}>
+        <option selected>Escoger categoria de busqueda</option>
+        {
+          Object.keys(formSh).map((each) =>{
+            if(!['area','fechaDeIngreso','fechaDeRegistro'].includes(each)){
+              return (
+                <option value={each}>{each}</option>
+              )
+          }
+          })
+        }
+      </select>
+    <br />
+
+    <form className="form-inline" onSubmit = {this.onSubmitBusqueda}>
+        <input className="form-control mr-sm-2" type="text" name="search" id="search"  onChange={this.handleChangeSearch} placeholder="Search" aria-label="Search"/>
+    </form>    
+    <br />
+    <button className="btn btn-outline-info my-2 my-sm-0" onClick = {this.onSubmitBusqueda} type="button">Search</button>
+    <br />
+
   <button className="btn btn-success" onClick={()=>{this.setState({form : null, tipoModal: 'insertar'}); this.modalInsertar()}}>Agregar Usuario</button>
   <br /><br />
     <table className="table ">
@@ -244,10 +337,43 @@ class App extends Component {
             </ModalFooter>
     </Modal>
 
+  <button className="btn btn-primary btn-lg btn-block" onClick = {()=> {
+    const paginado = this.state.paginadoFinal + 5
+    this.peticionesGetPaginado(this.state.paginadoInicial,paginado);
+    this.setState({paginadoFinal: paginado})
+  }}>
+                    Ver mas usuarios
+   </button>
+
+  
 
   </div>
-  );
+
+          
+
+  )
+  ;
   }
 }
 
 export default App;
+
+
+/***
+ * 
+ *  <nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+      {
+        this.state.cantidadUsers.map((each) => {
+          return (
+            <li class="page-item" onClick = {()=> {
+              const paginado = this.state.paginadoFinal + 5
+              this.peticionesGetPaginado(this.state.paginadoInicial,paginado);
+              this.setState({paginadoFinal: paginado})
+            }}><a class="page-link" href="#">{`${each}`}</a></li>
+          )
+        })
+      }
+    </ul>
+  </nav>
+ */

@@ -1,5 +1,8 @@
 .App {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+
 }
 
 .App-logo {
@@ -28,6 +31,16 @@
   color: #61dafb;
 }
 
+.btnAdd {
+  display: block;
+  background-color: #61dafb;
+
+}
+.btnadd{
+  align-content: center;
+  display: block;
+
+}
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -36,3 +49,18 @@
     transform: rotate(360deg);
   }
 }
+
+#demoFont {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 31px;
+  letter-spacing: 3.4px;
+  word-spacing: 2.8px;
+  color: #FFFFFF;
+  background: #333333;
+  text-shadow: 0 -1px 4px #FFF, 0 -2px 10px #ff0, 0 -10px 20px #ff8000, 0 -18px 40px #F00;
+  font-weight: normal;
+  text-decoration: none;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: none;
+  }
