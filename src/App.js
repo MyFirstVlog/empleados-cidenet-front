@@ -8,6 +8,16 @@ import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 
 const url = "http://localhost:8080/api/users"
+const hoy = new Date().toISOString().slice(0, 10)
+const mesAnteriorFinal =  (hoy) => {
+  const split = String(Number(hoy.split('-')[1]) - 1)
+  if(split < 10){
+    const mes = '0' + String(split)
+    const splitFinal = hoy.split('-')[0]+'-'+mes+'-'+hoy.split('-')[2]
+    return splitFinal
+  }
+return hoy.split('-')[0]+'-'+split+'-'+hoy.split('-')[2]
+}
 
 class App extends Component {
 
@@ -25,8 +35,8 @@ class App extends Component {
       segundoApellido : '',
       pais : '',
       area: '',
-      fechaDeRegistro : new Date(),
-      fechaDeIngreso : "2021-10-16T01:10:22.359Z"
+      fechaDeRegistro : '',
+      fechaDeIngreso : ''
     },
     tipoModal : ''
   }
@@ -43,8 +53,7 @@ class App extends Component {
   peticionPost = async () => {
     const obj = {
       ...this.state.form,
-      fechaDeRegistro : new Date(),
-      fechaDeIngreso : "2021-10-16T01:10:22.359Z"
+      fechaDeRegistro : hoy,
     }
     const json = JSON.stringify(obj)
     await axios.post(url,json,{
@@ -100,12 +109,13 @@ class App extends Component {
         segundoApellido : usuario.segundoApellido,
         pais : usuario.pais,
         area: usuario.area,
-        fechaDeEdicion : "2021-10-16T01:10:22.359Z",
-        fechaDeRegistro : "2021-10-16T01:10:22.359Z",
-        fechaDeIngreso : "2021-10-16T01:10:22.359Z"
+        fechaDeRegistro : usuario.fechaDeRegistro,
+        fechaDeIngreso : usuario.fechaDeIngreso
       }
     })
   }
+  
+ 
 
   handleChange = async e => {
     e.persist()
@@ -115,7 +125,7 @@ class App extends Component {
         [e.target.name]: e.target.value
       }
     })
-    console.log(this.state.form)
+
   }
 
 
@@ -142,6 +152,8 @@ class App extends Component {
           <th>Apellidos</th>
           <th>Area</th>
           <th>Pais</th>
+          <th>Fecha de Ingreso</th>
+          <th>Fecha de Registro</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -151,10 +163,12 @@ class App extends Component {
             <tr> 
               <td>{user.tipoID}</td>
               <td>{user.numero}</td>
-              <td>{`${user.primerNombre} ${user.otroNombre}`}</td>
+              <td>{`${user.primerNombre} ${user.otroNombre ? user.otroNombre : ''}`}</td>
               <td>{`${user.primerApellido} ${user.segundoApellido}`}</td>
               <td>{user.area}</td>
               <td>{user.pais}</td>
+              <td>{user.fechaDeIngreso}</td>
+              <td>{user.fechaDeRegistro}</td>
               <td>
                 <button className="btn btn-primary" onClick={() => {this.seleccionarUsuario(user); this.modalInsertar()}}><FontAwesomeIcon icon={faEdit}/></button>
                 {"   "}
@@ -195,6 +209,13 @@ class App extends Component {
                     <br />
                     <label htmlFor="area">Área</label>
                     <input className="form-control" type="text" name="area" id="area" onChange={this.handleChange} value = {form ? form.area : ''}/>
+                    <br />
+                    <label htmlFor="area">Fecha de Ingreso</label>
+                    <input  type="date" id="fechaDeIngreso" name="fechaDeIngreso"
+                            value= {form ? form.fechaDeIngreso : hoy}
+                            min={mesAnteriorFinal(hoy)} max={hoy} onChange={this.handleChange} 
+                    >              
+                    </input>
                     <br />
                   </div>
                 </ModalBody>
