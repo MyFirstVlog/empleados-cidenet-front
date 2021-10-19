@@ -1,4 +1,11 @@
-# Getting Started with Create React App
+# Implementacion del front-end de empleados de cidenet
+Esta es una aplicacion web creada con React Js con el fin de consumir los recursos del back-end y poder interacturar el usuario con la información
+
+Link del despliegue en Heroku:
+
+https://empleados-cidinet-front.herokuapp.com/
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
