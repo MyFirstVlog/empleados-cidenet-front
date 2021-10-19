@@ -270,7 +270,7 @@ class App extends Component {
                   </select>
                     <br />
                     <label htmlFor="numero">Numero de Identificación</label>
-                    <input className="form-control" type="text" name="numero" id="numero" onChange={this.handleChange} value = {form ? form.numero : ''}/>
+                    <input className="form-control" type="text" name="numero" id="numero" readOnly onChange={this.handleChange} value = {form ? form.numero : ''}/>
                     <br />
                     <label htmlFor="primerNombre">Primer Nombre</label>
                     <input className="form-control" type="text" name="primerNombre" id="primerNombre" onChange={this.handleChange} value = {form ? form.primerNombre : ''}/>
