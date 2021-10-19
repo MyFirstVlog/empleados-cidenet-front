@@ -6,6 +6,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import Selectbusqueda from './selectBusqueda';
+
 const resources = require('./resources')
 const hoy = new Date().toISOString().slice(0, 10)
 const mesAnteriorFinal =  (hoy) => {
@@ -50,9 +52,9 @@ class App extends Component {
     categoria:''
   }
 
+  //Metodos de la clase App
   peticionesGet = () => { 
     axios.get(resources.url).then(response => {
-      console.log(response.data)
       this.setState({data : response.data.usuarios, cantidadUsers : Array.from(Array(Math.floor(response.data.total/5) + 1).keys())})
     }).catch(error => {
       console.log(error)
@@ -61,7 +63,6 @@ class App extends Component {
 
   peticionesGetPaginado = (desde=0,limite=5) => { 
     axios.get(resources.url+'?desde='+desde+'&limite='+limite).then(response => {
-      console.log(response.data)
       this.setState({data : response.data.usuarios})
     }).catch(error => {
       console.log(error)
@@ -132,8 +133,6 @@ class App extends Component {
       }
     })
   }
-  
- 
 
   handleChange = async e => {
     e.persist()
@@ -162,7 +161,6 @@ class App extends Component {
     const select = document.getElementById('inputState')
     const categoria = select.value
     this.setState({categoria})
-    console.log({categoria})
   }
 
   onSubmitBusqueda = (e) => {
@@ -172,13 +170,10 @@ class App extends Component {
     const urlL = `${resources.url}/${categoria}/${search}`
     axios.get(`${resources.urlSearch}/${categoria}/${search}`).then(response => {
       this.setState({data : response.data.results})
-      console.log(this.state.data)
     }).catch(error => {
       console.log(error)
     })
   }
-
-
 
 
   //Ciclo de vida 
@@ -189,7 +184,9 @@ class App extends Component {
 
 
   render(){
+    
     const {form} = this.state
+
     return (
       <div className="App">
 
@@ -202,18 +199,7 @@ class App extends Component {
 
     <label for="inputState">Elige La categoria que desees Buscar</label>
     <br />
-      <select id="inputState" class="form-control" onChange={this.tipoCategoriaOnChange}>
-        <option selected>Escoger categoria de busqueda</option>
-        {
-          Object.keys(resources.formSh).map((each) =>{
-            if(!['area','fechaDeIngreso','fechaDeRegistro'].includes(each)){
-              return (
-                <option value={each}>{each}</option>
-              )
-          }
-          })
-        }
-      </select>
+      <Selectbusqueda tipoCategoriaOnChange= {this.tipoCategoriaOnChange}/>
     <br />
 
     <form className="form-inline" onSubmit = {this.onSubmitBusqueda}>
@@ -375,32 +361,9 @@ class App extends Component {
   
 
   </div>
-
-          
-
   )
   ;
   }
 }
 
 export default App;
-
-
-/***
- * 
- *  <nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-center">
-      {
-        this.state.cantidadUsers.map((each) => {
-          return (
-            <li class="page-item" onClick = {()=> {
-              const paginado = this.state.paginadoFinal + 5
-              this.peticionesGetPaginado(this.state.paginadoInicial,paginado);
-              this.setState({paginadoFinal: paginado})
-            }}><a class="page-link" href="#">{`${each}`}</a></li>
-          )
-        })
-      }
-    </ul>
-  </nav>
- */
